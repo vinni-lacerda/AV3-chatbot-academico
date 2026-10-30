@@ -288,7 +288,7 @@ Preencher os demais membros da equipe e ajustar a quantidade de linhas conforme 
 |:--:|---|---|---|
 | 1 | Vinicius Lacerda Santos | 12725210686 | A definir |
 | 2 | Hiago da Silva Lins Goncalves | 12525163385 | A definir |
-| 3 | [Nome completo] | [RA] | A definir |
+| 3 | Leoni Lucas Mascarenhas Silva | 12725156424 | A definir |
 | 4 | [Nome completo] | [RA] | A definir |
 | 5 | [Nome completo] | [RA] | A definir |
 
