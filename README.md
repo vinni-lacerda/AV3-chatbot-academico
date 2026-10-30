@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1403" height="605" alt="{1878A4BE-E63A-404E-8AE3-CF33258C1898}" src="https://github.com/user-attachments/assets/891b3338-43b9-4247-8852-8886167eec68" /><div align="center">
 
 # 🤝 Passa o Bastão
 
@@ -287,7 +287,7 @@ Preencher os demais membros da equipe e ajustar a quantidade de linhas conforme 
 | Integrante | Nome completo | RA | Responsabilidade |
 |:--:|---|---|---|
 | 1 | Vinicius Lacerda Santos | 12725210686 | A definir |
-| 2 | [Nome completo] | [RA] | A definir |
+| 2 | Pedro Murilo Pereira | 122519964 | A definir |
 | 3 | [Nome completo] | [RA] | A definir |
 | 4 | [Nome completo] | [RA] | A definir |
 | 5 | [Nome completo] | [RA] | A definir |
