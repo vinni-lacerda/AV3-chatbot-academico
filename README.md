@@ -287,7 +287,7 @@ Preencher os demais membros da equipe e ajustar a quantidade de linhas conforme 
 | Integrante | Nome completo | RA | Responsabilidade |
 |:--:|---|---|---|
 | 1 | Vinicius Lacerda Santos | 12725210686 | A definir |
-| 2 | [Nome completo] | [RA] | A definir |
+| 2 | Pedro Murilo Pereira | 122519964 | A definir |
 | 3 | [Nome completo] | [RA] | A definir |
 | 4 | [Nome completo] | [RA] | A definir |
 | 5 | [Nome completo] | [RA] | A definir |
