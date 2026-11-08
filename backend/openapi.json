@@ -51,12 +51,12 @@
           "name": {
             "type": "string",
             "minLength": 2,
-            "example": "Vinicius Lacerda Santos"
+            "example": "Rafael Stolf Silva"
           },
           "email": {
             "type": "string",
             "format": "email",
-            "example": "vinicius.novo@universidade.edu.br"
+            "example": "rafael.novo@universidade.edu.br"
           },
           "password": {
             "type": "string",
@@ -68,15 +68,15 @@
             "items": {
               "$ref": "#/components/schemas/UserRole"
             },
+            "description": "Opcional. O cadastro público atribui sempre novo_integrante.",
             "example": [
-              "integrante",
-              "responsavel"
+              "novo_integrante"
             ]
           },
           "academic_id": {
             "type": "string",
             "nullable": true,
-            "example": "12725210686"
+            "example": "122515186"
           }
         }
       },
@@ -281,8 +281,8 @@
         "tags": [
           "Autenticação e Perfis (RF01)"
         ],
-        "summary": "Cadastrar novo integrante com perfis (RF01)",
-        "description": "Registra um integrante no projeto atribuindo um ou mais perfis (`integrante`, `novo_integrante`, `responsavel`).",
+        "summary": "Cadastrar novo integrante no projeto (RF01)",
+        "description": "Registra um novo integrante no projeto. No cadastro público, o perfil atribuído é sempre novo_integrante por segurança.",
         "requestBody": {
           "required": true,
           "content": {
@@ -295,7 +295,7 @@
         },
         "responses": {
           "201": {
-            "description": "Integrante cadastrado com sucesso",
+            "description": "Integrante cadastrado com sucesso com perfil novo_integrante",
             "content": {
               "application/json": {
                 "schema": {

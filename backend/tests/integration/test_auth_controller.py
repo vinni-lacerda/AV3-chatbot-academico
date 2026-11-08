@@ -10,6 +10,7 @@ from infrastructure.http.flask.app_factory import create_flask_app
 from infrastructure.persistence.memory.in_memory_user_repository import (
     InMemoryUserRepository,
 )
+from infrastructure.persistence.seed import seed_initial_users
 from infrastructure.security.bcrypt_password_hasher import BcryptPasswordHasher
 
 
@@ -35,12 +36,13 @@ def test_agnostic_controller_runs_without_flask(container: DependencyContainer) 
             "name": "Integrante Agnóstico",
             "email": "agnostico@universidade.edu.br",
             "password": "Password123!",
-            "roles": ["integrante"],
+            "roles": ["responsavel"],
         }
     )
     reg_res = container.register_user_controller.handle(register_req)
     assert reg_res.status_code == 201
     assert reg_res.body["email"] == "agnostico@universidade.edu.br"
+    assert reg_res.body["roles"] == ["novo_integrante"]
 
     login_res = container.login_user_controller.handle(
         HttpRequest(
@@ -110,27 +112,30 @@ def test_flask_healthcheck_endpoint(client: FlaskClient) -> None:
     }
 
 
-def test_flask_adapter_register_login_and_me_endpoints(client: FlaskClient) -> None:
-    """Deve executar o fluxo completo de registro, login, perfil e autorização via Flask."""
+def test_flask_adapter_register_login_and_me_endpoints(
+    client: FlaskClient,
+    container: DependencyContainer,
+) -> None:
+    """Deve executar o fluxo de cadastro público com perfil novo_integrante e login do seed como responsável."""
     reg_response = client.post(
         "/api/v1/auth/register",
         json={
-            "name": "Leoni Mascarenhas",
-            "email": "leoni@universidade.edu.br",
+            "name": "Novo Integrante Publico",
+            "email": "publico@universidade.edu.br",
             "password": "Password123!",
-            "roles": ["integrante", "responsavel"],
             "academic_id": "12725156424",
         },
     )
     assert reg_response.status_code == 201
     reg_data = reg_response.get_json()
-    assert reg_data["email"] == "leoni@universidade.edu.br"
-    assert reg_data["permissions"]["can_review_knowledge"] is True
+    assert reg_data["email"] == "publico@universidade.edu.br"
+    assert reg_data["roles"] == ["novo_integrante"]
+    assert reg_data["permissions"]["can_review_knowledge"] is False
 
     login_response = client.post(
         "/api/v1/auth/login",
         json={
-            "email": "leoni@universidade.edu.br",
+            "email": "publico@universidade.edu.br",
             "password": "Password123!",
         },
     )
@@ -144,34 +149,50 @@ def test_flask_adapter_register_login_and_me_endpoints(client: FlaskClient) -> N
     assert me_response.status_code == 200
     assert me_response.get_json()["id"] == reg_data["id"]
 
+    seed_initial_users(container.register_user_use_case)
+    seed_login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "vinicius@universidade.edu.br",
+            "password": "PassaOBastao123!",
+        },
+    )
+    assert seed_login.status_code == 200
+    seed_token = seed_login.get_json()["access_token"]
+
     review_check = client.get(
         "/api/v1/auth/permissions/review-check",
-        headers={"Authorization": f"Bearer {token}"},
+        headers={"Authorization": f"Bearer {seed_token}"},
     )
     assert review_check.status_code == 200
 
 
-def test_flask_user_without_reviewer_role_gets_403_on_review_endpoint(
+def test_public_registration_cannot_grant_responsavel_and_gets_403_on_review(
     client: FlaskClient,
 ) -> None:
-    """Critério de aceite do README: 'Usuário sem permissão de revisão -> Não consegue aprovar conteúdos'."""
-    client.post(
+    """Confirma que uma conta cadastrada recebe 403 na rota de revisão mesmo enviando roles: ['responsavel']."""
+    reg_response = client.post(
         "/api/v1/auth/register",
         json={
-            "name": "Novo Integrante Teste",
-            "email": "novato@universidade.edu.br",
+            "name": "Tentativa Invasor Responsavel",
+            "email": "invasor@universidade.edu.br",
             "password": "Password123!",
-            "roles": ["novo_integrante"],
+            "roles": ["responsavel"],
         },
     )
+    assert reg_response.status_code == 201
+    reg_data = reg_response.get_json()
+    assert reg_data["roles"] == ["novo_integrante"]
+    assert reg_data["permissions"]["can_review_knowledge"] is False
 
     login_response = client.post(
         "/api/v1/auth/login",
         json={
-            "email": "novato@universidade.edu.br",
+            "email": "invasor@universidade.edu.br",
             "password": "Password123!",
         },
     )
+    assert login_response.status_code == 200
     token = login_response.get_json()["access_token"]
 
     review_check = client.get(
@@ -188,9 +209,8 @@ def test_flask_error_responses_for_conflict_and_unauthorized(
     """Deve traduzir exceções de domínio em status HTTP 400, 401 e 409 com headers apropriados."""
     payload = {
         "name": "Vinicius Lacerda",
-        "email": "vinicius@universidade.edu.br",
+        "email": "vinicius.novo@universidade.edu.br",
         "password": "Password123!",
-        "roles": ["integrante"],
     }
     first = client.post("/api/v1/auth/register", json=payload)
     assert first.status_code == 201
@@ -201,7 +221,7 @@ def test_flask_error_responses_for_conflict_and_unauthorized(
 
     invalid_login = client.post(
         "/api/v1/auth/login",
-        json={"email": "vinicius@universidade.edu.br", "password": " errada "},
+        json={"email": "vinicius.novo@universidade.edu.br", "password": " errada "},
     )
     assert invalid_login.status_code == 401
     assert invalid_login.headers.get("WWW-Authenticate") == "Bearer"

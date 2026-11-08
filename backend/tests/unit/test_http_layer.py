@@ -2,6 +2,7 @@
 
 import pytest
 
+from domain.entities.user import UserRole
 from domain.exceptions.domain_exceptions import (
     DomainError,
     ForbiddenRoleError,
@@ -62,7 +63,7 @@ def test_health_controller_returns_200_ok() -> None:
 
 
 def test_controllers_validation_errors_on_malformed_requests() -> None:
-    """Deve validar campos obrigatórios e formato de perfis nos controllers agnósticos."""
+    """Deve validar campos obrigatórios nos controllers agnósticos."""
     container = DependencyContainer(
         user_repository=InMemoryUserRepository(),
         password_hasher=BcryptPasswordHasher(rounds=4),
@@ -71,32 +72,35 @@ def test_controllers_validation_errors_on_malformed_requests() -> None:
     with pytest.raises(ValidationError, match="obrigatórios"):
         container.register_user_controller.handle(HttpRequest(body={"name": "Só Nome"}))
 
-    with pytest.raises(ValidationError, match="lista não vazia"):
+    with pytest.raises(ValidationError, match="obrigatórios"):
         container.register_user_controller.handle(
-            HttpRequest(
-                body={
-                    "name": "Leoni",
-                    "email": "leoni@uni.edu.br",
-                    "password": "Password123!",
-                    "roles": [],
-                }
-            )
-        )
-
-    with pytest.raises(ValidationError, match="Perfil inválido"):
-        container.register_user_controller.handle(
-            HttpRequest(
-                body={
-                    "name": "Leoni",
-                    "email": "leoni@uni.edu.br",
-                    "password": "Password123!",
-                    "roles": ["perfil_inexistente"],
-                }
-            )
+            HttpRequest(body={"name": "Leoni", "email": "leoni@uni.edu.br"})
         )
 
     with pytest.raises(ValidationError, match="obrigatórios"):
         container.login_user_controller.handle(HttpRequest(body={"email": "leoni@uni.edu.br"}))
+
+
+def test_register_user_controller_always_assigns_novo_integrante() -> None:
+    """Deve garantir que o controller público atribui novo_integrante mesmo recebendo responsavel."""
+    container = DependencyContainer(
+        user_repository=InMemoryUserRepository(),
+        password_hasher=BcryptPasswordHasher(rounds=4),
+    )
+
+    response = container.register_user_controller.handle(
+        HttpRequest(
+            body={
+                "name": "Tentativa Responsavel",
+                "email": "tentativa@uni.edu.br",
+                "password": "Password123!",
+                "roles": [UserRole.RESPONSAVEL.value],
+            }
+        )
+    )
+    assert response.status_code == 201
+    assert response.body["roles"] == [UserRole.NOVO_INTEGRANTE.value]
+    assert response.body["permissions"]["can_review_knowledge"] is False
 
 
 def test_auth_guard_rejects_missing_or_malformed_authorization_header() -> None:

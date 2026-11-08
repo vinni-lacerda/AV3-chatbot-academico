@@ -23,29 +23,17 @@ class RegisterUserController(IController):
         name = str(body.get("name", "")).strip()
         email = str(body.get("email", "")).strip()
         password = str(body.get("password", ""))
-        raw_roles = body.get("roles", [UserRole.NOVO_INTEGRANTE.value])
         academic_id = body.get("academic_id")
 
         if not name or not email or not password:
             raise ValidationError("Os campos 'name', 'email' e 'password' são obrigatórios.")
-
-        if not isinstance(raw_roles, list) or not raw_roles:
-            raise ValidationError("O campo 'roles' deve ser uma lista não vazia de perfis.")
-
-        try:
-            roles = [UserRole(str(role)) for role in raw_roles]
-        except ValueError as exc:
-            valid_values = ", ".join([r.value for r in UserRole])
-            raise ValidationError(
-                f"Perfil inválido informado. Perfis permitidos: {valid_values}."
-            ) from exc
 
         output = self._use_case.execute(
             RegisterUserInput(
                 name=name,
                 email=email,
                 password=password,
-                roles=roles,
+                roles=[UserRole.NOVO_INTEGRANTE],
                 academic_id=str(academic_id).strip() if academic_id is not None else None,
             )
         )

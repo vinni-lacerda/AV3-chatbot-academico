@@ -56,12 +56,12 @@ def build_openapi_spec() -> dict[str, Any]:
                         "name": {
                             "type": "string",
                             "minLength": 2,
-                            "example": "Vinicius Lacerda Santos",
+                            "example": "Rafael Stolf Silva",
                         },
                         "email": {
                             "type": "string",
                             "format": "email",
-                            "example": "vinicius.novo@universidade.edu.br",
+                            "example": "rafael.novo@universidade.edu.br",
                         },
                         "password": {
                             "type": "string",
@@ -71,12 +71,13 @@ def build_openapi_spec() -> dict[str, Any]:
                         "roles": {
                             "type": "array",
                             "items": {"$ref": "#/components/schemas/UserRole"},
-                            "example": ["integrante", "responsavel"],
+                            "description": "Opcional. O cadastro público atribui sempre novo_integrante.",
+                            "example": ["novo_integrante"],
                         },
                         "academic_id": {
                             "type": "string",
                             "nullable": True,
-                            "example": "12725210686",
+                            "example": "122515186",
                         },
                     },
                 },
@@ -232,10 +233,10 @@ def build_openapi_spec() -> dict[str, Any]:
             "/api/v1/auth/register": {
                 "post": {
                     "tags": ["Autenticação e Perfis (RF01)"],
-                    "summary": "Cadastrar novo integrante com perfis (RF01)",
+                    "summary": "Cadastrar novo integrante no projeto (RF01)",
                     "description": (
-                        "Registra um integrante no projeto atribuindo um ou mais perfis "
-                        "(`integrante`, `novo_integrante`, `responsavel`)."
+                        "Registra um novo integrante no projeto. No cadastro público, o perfil "
+                        "atribuído é sempre novo_integrante por segurança."
                     ),
                     "requestBody": {
                         "required": True,
@@ -249,7 +250,7 @@ def build_openapi_spec() -> dict[str, Any]:
                     },
                     "responses": {
                         "201": {
-                            "description": "Integrante cadastrado com sucesso",
+                            "description": "Integrante cadastrado com sucesso com perfil novo_integrante",
                             "content": {
                                 "application/json": {
                                     "schema": {
