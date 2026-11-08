@@ -1,0 +1,41 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: passa_o_bastao_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: passa_o_bastao
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongodb/init-seed.js:/docker-entrypoint-initdb.d/init-seed.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: passa_o_bastao_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "Passa o Bastão API"
+      APP_ENV: "development"
+      DEBUG: "true"
+      MONGODB_URI: "mongodb://mongodb:27017"
+      MONGODB_DB_NAME: "passa_o_bastao"
+      JWT_SECRET_KEY: "dev-secret-key-change-in-production-min-32-bytes"
+      JWT_ALGORITHM: "HS256"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "120"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
