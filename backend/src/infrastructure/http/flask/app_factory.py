@@ -5,6 +5,7 @@ from flask import Blueprint, Flask, Response, request
 from domain.repositories.user_repository import IUserRepository
 from infrastructure.container.composition_root import DependencyContainer
 from infrastructure.http.controllers.docs_controller import build_swagger_ui_html
+from infrastructure.http.controllers.knowledge_controller import build_knowledge_routes
 from infrastructure.http.flask.adapter import adapt_flask_route
 
 
@@ -19,6 +20,7 @@ def create_flask_app(
 
     app = Flask(__name__)
     app.config["CONTAINER"] = app_container
+    app.config["MAX_CONTENT_LENGTH"] = 256 * 1024
     allowed_origins = set(app_container.settings.cors_allowed_origins)
 
     @app.before_request
@@ -98,5 +100,16 @@ def create_flask_app(
     app.register_blueprint(docs_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
+
+    if app_container.knowledge and app_container.consult:
+        knowledge_bp = Blueprint("knowledge", __name__, url_prefix="/api/v1")
+        routes = build_knowledge_routes(
+            app_container.auth_guard, app_container.knowledge, app_container.consult
+        )
+        for method, path, controller in routes:
+            knowledge_bp.add_url_rule(
+                path, endpoint=f"{method}:{path}", view_func=adapt_flask_route(controller), methods=[method]
+            )
+        app.register_blueprint(knowledge_bp)
 
     return app

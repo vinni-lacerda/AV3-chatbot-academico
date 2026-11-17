@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from infrastructure.http.knowledge_openapi import knowledge_paths
+
 
 def build_openapi_spec() -> dict[str, Any]:
     """Constrói o documento OpenAPI 3.0.3 completo com todos os endpoints e schemas atuais."""
@@ -211,6 +213,7 @@ def build_openapi_spec() -> dict[str, Any]:
             },
         },
         "paths": {
+            **knowledge_paths(),
             "/api/v1/health": {
                 "get": {
                     "tags": ["Infraestrutura"],

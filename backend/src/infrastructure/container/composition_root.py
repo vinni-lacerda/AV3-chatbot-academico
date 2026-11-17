@@ -6,11 +6,15 @@ e instancia os Casos de Uso e Controllers agnósticos.
 
 from application.use_cases.authenticate_user import AuthenticateUserUseCase
 from application.use_cases.get_current_user import GetCurrentUserUseCase
+from application.use_cases.consult_knowledge import ConsultKnowledge
+from application.use_cases.manage_knowledge import ManageKnowledge
 from application.use_cases.register_user import RegisterUserUseCase
 from domain.repositories.user_repository import IUserRepository
+from domain.repositories.knowledge_repository import KnowledgeRepository
 from domain.services.password_hasher import IPasswordHasher
 from domain.services.token_provider import ITokenProvider
 from infrastructure.config.settings import Settings, get_settings
+from infrastructure.ai.ollama import OllamaSelector
 from infrastructure.http.controllers.auth_controller import (
     GetMeController,
     LoginUserController,
@@ -21,6 +25,9 @@ from infrastructure.http.controllers.docs_controller import OpenApiSpecControlle
 from infrastructure.http.controllers.health_controller import HealthController
 from infrastructure.http.middlewares.auth_guard import AuthGuard
 from infrastructure.persistence.mongodb.connection import MongoDBConnectionManager
+from infrastructure.persistence.mongodb.repositories.mongo_knowledge_repository import (
+    MongoKnowledgeRepository,
+)
 from infrastructure.persistence.mongodb.repositories.mongo_user_repository import (
     MongoUserRepository,
 )
@@ -37,6 +44,7 @@ class DependencyContainer:
         user_repository: IUserRepository | None = None,
         password_hasher: IPasswordHasher | None = None,
         token_provider: ITokenProvider | None = None,
+        knowledge_repository: KnowledgeRepository | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self._mongo_manager: MongoDBConnectionManager | None = None
@@ -46,6 +54,21 @@ class DependencyContainer:
         else:
             self._mongo_manager = MongoDBConnectionManager(self.settings)
             self.user_repository = MongoUserRepository(self._mongo_manager.database)
+
+        if knowledge_repository is None and self._mongo_manager is not None:
+            knowledge_repository = MongoKnowledgeRepository(self._mongo_manager.database)
+        self.knowledge = None
+        self.consult = None
+        if knowledge_repository is not None:
+            self.knowledge = ManageKnowledge(knowledge_repository, self.user_repository)
+            select = None
+            if self.settings.ollama_model:
+                select = OllamaSelector(
+                    self.settings.ollama_model,
+                    self.settings.ollama_port,
+                    self.settings.ollama_timeout_seconds,
+                )
+            self.consult = ConsultKnowledge(self.knowledge, select)
 
         self.password_hasher = password_hasher or BcryptPasswordHasher()
         self.token_provider = token_provider or JwtTokenProvider(
