@@ -327,17 +327,61 @@
                     "type": "string"
                   },
                   "responsible_id": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "uuid"
                   }
                 },
                 "required": [
                   "title",
-                  "description"
+                  "description",
+                  "responsible_id"
                 ]
               }
             }
           }
         }
+      }
+    },
+    "/api/v1/activities/{identifier}": {
+      "get": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Consultar atividade",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
       }
     },
     "/api/v1/interview/questions": {

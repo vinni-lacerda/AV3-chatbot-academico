@@ -5,7 +5,9 @@ from uuid import uuid4
 import mongomock
 import pytest
 from pymongo import MongoClient
+from pymongo.errors import WriteError
 
+from domain.entities.user import User, UserRole
 from domain.knowledge import QUESTIONS
 from infrastructure.config.settings import get_settings
 from infrastructure.container.composition_root import DependencyContainer
@@ -13,6 +15,7 @@ from infrastructure.http.flask.app_factory import create_flask_app
 from infrastructure.persistence.demo import DEMO_ACTIVITY_ID, DEMO_DOCUMENT_ID, DEMO_PASSWORD, DEMO_USERS, seed_demo
 from infrastructure.persistence.mongodb.repositories.mongo_knowledge_repository import MongoKnowledgeRepository
 from infrastructure.persistence.mongodb.repositories.mongo_user_repository import MongoUserRepository
+from infrastructure.persistence.mongodb.schema import ensure_schema
 
 
 @pytest.fixture(scope="module")
@@ -21,6 +24,8 @@ def pilot():
     uri = os.getenv("MVP_TEST_MONGO_URI")
     mongo = MongoClient(uri, serverSelectionTimeoutMS=5000) if uri else mongomock.MongoClient()
     database = mongo[database_name]
+    if uri:
+        ensure_schema(database)
     database.users.create_index("email", unique=True)
     settings = replace(get_settings(), app_env="test", ollama_model="")
     container = DependencyContainer(
@@ -65,6 +70,50 @@ def target(record, **values):
     return {"version": record["versions"][-1]["number"], "revision": record["revision"], **values}
 
 
+def test_activity_requires_an_active_reviewer_and_can_be_read(pilot):
+    call, container = pilot
+    data = {"title": "Organização de oficinas", "description": "Programa fictício de oficinas."}
+    author = call("GET", "/auth/me", AUTHOR)
+    reviewer = call("GET", "/auth/me", REVIEWER)
+    inactive = container.user_repository.create(User(
+        "Responsável inativo", "inativo@demo.example", "unused",
+        roles={UserRole.RESPONSAVEL}, is_active=False,
+    ))
+    call("POST", "/activities", AUTHOR, {**data, "responsible_id": reviewer["id"]}, status=403)
+    call("POST", "/activities", REVIEWER, data, status=400)
+    for invalid_id in (str(uuid4()), author["id"], inactive.id):
+        call("POST", "/activities", REVIEWER, {**data, "responsible_id": invalid_id}, status=400)
+    activity = call("POST", "/activities", REVIEWER, {**data, "responsible_id": reviewer["id"]}, status=201)
+    assert activity["responsible"] == {"id": reviewer["id"], "name": reviewer["name"]}
+    assert activity in call("GET", "/activities", READER)["items"]
+    assert call("GET", f"/activities/{activity['id']}", READER) == activity
+    call("GET", f"/activities/{uuid4()}", READER, status=404)
+
+
+def test_mongodb_rejects_invalid_documents_and_preserves_legacy_activities():
+    uri = os.getenv("MVP_TEST_MONGO_URI")
+    if not uri:
+        pytest.skip("Validadores de coleção exigem MongoDB real (MVP_TEST_MONGO_URI).")
+    with MongoClient(uri, serverSelectionTimeoutMS=5000) as mongo:
+        database = mongo[f"passa_o_bastao_test_{uuid4().hex}"]
+        try:
+            legacy = {"_id": str(uuid4()), "title": "Legado", "description": "Teste", "responsible": None}
+            database.activities.insert_one(legacy)
+            ensure_schema(database)
+            ensure_schema(database)
+            assert database.activities.find_one({"_id": legacy["_id"]}) == legacy
+            for collection, document in (
+                (database.activities, {**legacy, "_id": str(uuid4())}),
+                (database.users, {"id": str(uuid4()), "roles": ["papel_desconhecido"]}),
+                (database.knowledge_records, {"_id": str(uuid4()), "kind": "documento", "versions": []}),
+            ):
+                with pytest.raises(WriteError) as error:
+                    collection.insert_one(document)
+                assert error.value.code == 121  # DocumentValidationFailure
+        finally:
+            mongo.drop_database(database.name)
+
+
 def test_interview_review_versions_and_withdrawal(pilot):
     call, _ = pilot
     record_id = str(uuid4())
@@ -93,11 +142,22 @@ def test_interview_review_versions_and_withdrawal(pilot):
     call("GET", f"/sources/{record_id}/1", READER, status=404)
     call("GET", "/records?view=review", AUTHOR, status=403)
     call("POST", f"{path}/review", AUTHOR, target(pending, decision="aprovado"), status=403)
+    call("POST", f"/records/{uuid4()}/review", REVIEWER, target(pending, decision="aprovado"), status=404)
+    call("POST", f"{path}/review", REVIEWER, target(pending, version=2, decision="aprovado"), status=404)
     call("POST", f"{path}/review", REVIEWER, target(pending, decision="ajustes_solicitados"), status=400)
     changed = call("POST", f"{path}/review", REVIEWER, target(
         pending, decision="ajustes_solicitados", note="Acrescente a primeira etapa.",
     ))
-    assert changed["versions"][-1]["reviews"][0]["note"] == "Acrescente a primeira etapa."
+    stored = call("GET", "/records?view=mine&status=ajustes_solicitados", AUTHOR)["items"]
+    assert changed in stored
+    version = changed["versions"][-1]
+    reviewer = call("GET", "/auth/me", REVIEWER)
+    assert version["reviews"] == [{
+        "reviewer": {"id": reviewer["id"], "name": reviewer["name"]},
+        "decision": "ajustes_solicitados",
+        "note": "Acrescente a primeira etapa.",
+        "date": version["updated_at"],
+    }]
     assert query("Quais são as etapas?")["gap"]
 
     correction = call("POST", f"{path}/revise", AUTHOR, target(changed), status=201)
@@ -146,6 +206,7 @@ def test_approval_before_use_and_withdrawal_during_ai(pilot):
     path = f"/records/{document_id}"
     activity = call("POST", "/activities", REVIEWER, {
         "title": "Mostra audiovisual", "description": "Exibição fictícia.",
+        "responsible_id": call("GET", "/auth/me", REVIEWER)["id"],
     }, status=201)
     draft = call("POST", "/records", AUTHOR, {
         "id": document_id, "activity_id": activity["id"], "kind": "documento",

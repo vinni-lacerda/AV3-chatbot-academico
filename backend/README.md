@@ -199,6 +199,7 @@ Com o backend rodando em `http://localhost:8000`:
 | `GET` | `/api/v1/auth/permissions/review-check` | Bearer JWT (`responsavel`) | Valida permissão exclusiva de revisão (`403` para demais perfis) |
 
 O [contrato das rotas de conhecimento](../docs/arquitetura.md#api) documenta atividades, entrevistas, revisão, fontes e chat.
+O [esquema MongoDB](../docs/arquitetura.md#mongodb) descreve os validadores, os índices e como atualizar uma base do MVP.
 
 ---
 
@@ -220,3 +221,5 @@ python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 .venv\Scripts\pytest -v
 ```
+
+Para testar os validadores com MongoDB 7, defina `MVP_TEST_MONGO_URI` com a URI do servidor de teste antes de executar o pytest. A suíte cria e remove bases temporárias próprias. Sem essa variável, o fluxo da API usa mongomock e o teste dos validadores é pulado.

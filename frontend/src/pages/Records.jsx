@@ -95,7 +95,6 @@ function NewActivity({ api, user, onCreated }) {
   const action = useAction()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [responsible, setResponsible] = useState(true)
   const [open, setOpen] = useState(false)
 
   if (!open) return <button type="button" onClick={() => setOpen(true)}>Cadastrar atividade</button>
@@ -104,7 +103,7 @@ function NewActivity({ api, user, onCreated }) {
     event.preventDefault()
     action.run(async () => {
       await api('/activities', {
-        method: 'POST', body: { title, description, responsible_id: responsible ? user.id : '' },
+        method: 'POST', body: { title, description, responsible_id: user.id },
       })
       setTitle('')
       setDescription('')
@@ -115,10 +114,7 @@ function NewActivity({ api, user, onCreated }) {
     <h2>Nova atividade</h2>
     <label>Título da atividade<input required maxLength={120} value={title} onChange={event => setTitle(event.target.value)} /></label>
     <label>Descrição<textarea required maxLength={1000} rows={3} value={description} onChange={event => setDescription(event.target.value)} /></label>
-    <label className="checkbox">
-      <input type="checkbox" checked={responsible} onChange={event => setResponsible(event.target.checked)} />
-      Indicar meu nome como responsável de referência
-    </label>
+    <p className="muted">Responsável de referência: {user.name}</p>
     <Alert>{action.problem}</Alert>
     <div className="actions">
       <button disabled={action.busy}>Salvar atividade</button>

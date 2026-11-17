@@ -18,13 +18,17 @@ A API recebe `Authorization: Bearer <token>`, recarrega a conta ativa e aplica a
 
 | Coleção | Dados |
 |---|---|
-| `users` | Identidade, perfis, hash de senha e situação da conta. Usa o esquema e os índices de autenticação já existentes. |
-| `activities` | UUID, título, descrição e responsável de referência opcional. A API valida o responsável cadastrado contra `users`. |
-| `knowledge_records` | UUID, atividade, tipo, autor, datas e revisão otimista. Contém as versões de conteúdo, autorização e decisões. |
+| `users` | ID de referência (`id`), nome, e-mail, hash de senha, papéis, situação da conta e datas BSON. O RA é opcional. `id` e `email` têm índices únicos. |
+| `activities` | UUID em `_id`, título, descrição e responsável de referência (`responsible.id`, `responsible.name`). Para cadastrar uma atividade, o responsável deve ter uma conta ativa com o papel `responsavel`. |
+| `knowledge_records` | UUID em `_id`, `activity_id`, tipo (`entrevista` ou `documento`), autor, datas em UTC e contador `revision` para controle de concorrência. As versões guardam o conteúdo, a autorização e as decisões. Os índices cobrem atividade, autor e estado das versões. |
 
-O MongoDB cria as coleções por demanda. A API inicializa os índices de atividade, autor e estado das versões ao subir. Uma base que já contém usuários continua disponível, com as novas coleções criadas sem alteração nos documentos de `users`. A carga fictícia é optativa e pode ser reaplicada sem recriar conteúdo aprovado ou retirar decisões.
+Na primeira conexão, a API cria as coleções que faltam com validadores `$jsonSchema`, atualiza os validadores das que já existem via `collMod` e garante os índices. A carga de demonstração passa pela mesma inicialização. A credencial de inicialização precisa poder listar e criar coleções, alterar seus validadores e criar índices. A operação pode ser repetida e não reescreve os documentos.
 
-Cada versão tem um número, editor, datas, conteúdo, confirmação de autorização e decisões de revisão. Uma entrevista guarda seis respostas. Um documento guarda título, referência de origem, data e texto. Cada revisão guarda responsável, decisão, data e observação. Solicitar ajustes exige uma observação.
+Ao atualizar uma base do MVP, atividades já gravadas sem responsável continuam legíveis. Para corrigi-las, localize-as com `db.activities.find({ responsible: null })` e atribua a cada uma um responsável ativo de `users`, preenchendo `responsible` com o `id` e o `name` dessa conta. Novas inserções e atualizações precisam passar pelo validador. Em mudanças futuras, adapte o validador e planeje uma migração explícita para campos que precisem ser preenchidos ou convertidos nos documentos existentes.
+
+Cada versão tem número, editor, datas, conteúdo, autorização e revisões. As fontes documentais ficam no conteúdo da versão, com título, origem, data de referência (AAAA-MM-DD) e texto. A fonte de uma entrevista são as seis respostas daquela versão. Cada revisão inclui revisor, decisão, data em UTC e observação. A API exige observação ao solicitar ajustes, valida as referências a atividades e versões e obtém autor e revisor da conta autenticada. O MongoDB valida a estrutura dos documentos sem consultar outras coleções.
+
+Para carregar dados fictícios, siga o [roteiro de demonstração](demonstracao.md). A carga é optativa para desenvolvimento e teste e pode ser reaplicada sem recriar conteúdo aprovado ou retirar decisões.
 
 O fluxo começa em **Rascunho** e passa a **Aguardando revisão** no envio. O responsável pode aprovar ou pedir ajustes. O autor pode abrir uma nova versão após aprovação, solicitação de ajustes ou retirada. O documento MongoDB é atualizado atomicamente com uma condição sobre a revisão anterior, o que impede uma decisão baseada em uma versão concorrente. A versão aprovada anterior continua ativa enquanto houver correções. Quando a substituta é aprovada, a anterior fica **Substituída** na mesma escrita. A retirada é imediata para novas consultas, inclusive para o endpoint da fonte. O histórico já carregado na aba pode conter uma resposta anterior. Retirar a versão atual preserva o histórico e encerra seu uso na base.
 
@@ -43,7 +47,8 @@ Com o Ollama habilitado, o modelo recebe somente a pergunta e os trechos aprovad
 | `GET /health` | Estado da API. Acesso público. |
 | `POST /auth/login`, `GET /auth/me` | Login com `email` e `password`. Consulta de identidade e permissões. |
 | `GET /activities` | Lista de atividades em `items`. |
-| `POST /activities` | `title`, `description` e `responsible_id` opcional. |
+| `GET /activities/{id}` | Dados de uma atividade, incluindo o responsável de referência. |
+| `POST /activities` | `title`, `description` e `responsible_id` obrigatórios. |
 | `GET /interview/questions` | Roteiro ordenado em `items`. |
 | `GET /records` | `view=library\|mine\|review` e filtros opcionais `activity_id`, `status` e `since` (AAAA-MM-DD). Retorna registros e versões visíveis em `items`. |
 | `POST /records` | `id` (UUID definido pelo cliente para retentativas), `activity_id` e `kind` (`entrevista` ou `documento`). |
