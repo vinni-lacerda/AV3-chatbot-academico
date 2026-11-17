@@ -33,8 +33,9 @@ def knowledge_paths():
     operations = (
         ("/activities", "get", "Listar atividades", "200", None, []),
         ("/activities", "post", "Cadastrar atividade", "201", object_schema({
-            "title": string, "description": string, "responsible_id": string,
-        }, ("title", "description")), []),
+            "title": string, "description": string, "responsible_id": identifier,
+        }, ("title", "description", "responsible_id")), []),
+        ("/activities/{identifier}", "get", "Consultar atividade", "200", None, [record_id]),
         ("/interview/questions", "get", "Listar perguntas da entrevista", "200", None, []),
         ("/records", "get", "Listar registros e versões visíveis", "200", None, record_filters),
         ("/records", "post", "Criar rascunho", "201", object_schema({

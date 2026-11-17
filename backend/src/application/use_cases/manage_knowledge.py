@@ -63,15 +63,15 @@ class ManageKnowledge:
 
     def create_activity(self, user: User, body: dict) -> dict:
         self.require_reviewer(user)
-        responsible_id = text_field(body, "responsible_id", 64, required=False)
-        responsible = self.users.find_by_id(responsible_id) if responsible_id else None
-        if responsible_id and (not responsible or not responsible.can_review_knowledge()):
+        responsible_id = text_field(body, "responsible_id", 64)
+        responsible = self.users.find_by_id(responsible_id)
+        if not responsible or not responsible.can_review_knowledge():
             raise ValidationError("Selecione um responsável ativo cadastrado.")
         activity = {
             "_id": str(uuid4()),
             "title": text_field(body, "title", 120),
             "description": text_field(body, "description", 1000),
-            "responsible": identity(responsible) if responsible else None,
+            "responsible": identity(responsible),
         }
         self.repository.create_activity(activity)
         return public_activity(activity)

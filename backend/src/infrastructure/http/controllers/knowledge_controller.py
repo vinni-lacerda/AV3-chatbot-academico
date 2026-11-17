@@ -33,6 +33,9 @@ def build_knowledge_routes(guard: AuthGuard, knowledge: ManageKnowledge, consult
     routes = (
         ("GET", "/activities", 200, lambda _user, _req: {"items": knowledge.activities()}),
         ("POST", "/activities", 201, lambda user, req: knowledge.create_activity(user, req.body)),
+        ("GET", "/activities/<identifier>", 200, lambda _user, req: knowledge.activity(
+            req.path_params["identifier"]
+        )),
         ("GET", "/interview/questions", 200, questionnaire),
         ("GET", "/records", 200, lambda user, req: {"items": knowledge.list_records(user, req.query_params)}),
         ("POST", "/records", 201, lambda user, req: knowledge.create_record(user, req.body)),

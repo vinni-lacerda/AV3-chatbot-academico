@@ -4,6 +4,7 @@ from pymongo import ASCENDING, MongoClient
 from pymongo.database import Database
 
 from infrastructure.config.settings import Settings
+from infrastructure.persistence.mongodb.schema import ensure_schema
 
 
 class MongoDBConnectionManager:
@@ -15,9 +16,10 @@ class MongoDBConnectionManager:
         self._db: Database | None = None
 
     def connect(self) -> None:
-        """Inicializa o cliente MongoDB e cria índices únicos necessários."""
+        """Inicializa o cliente MongoDB, instala validadores e cria índices."""
         self._client = MongoClient(self._settings.mongodb_uri)
         self._db = self._client[self._settings.mongodb_db_name]
+        ensure_schema(self._db)
         self._ensure_indexes()
 
     def _ensure_indexes(self) -> None:
