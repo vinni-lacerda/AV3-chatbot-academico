@@ -6,7 +6,7 @@
 
 **Inteligência artificial · Memória organizacional · Conversação · Revisão humana**
 
-![Status](https://img.shields.io/badge/status-em%20planejamento-blue)
+![Status](https://img.shields.io/badge/status-prot%C3%B3tipo-blue)
 ![Foco](https://img.shields.io/badge/foco-gest%C3%A3o%20do%20conhecimento-0f766e)
 ![Projeto](https://img.shields.io/badge/projeto-acad%C3%AAmico-334155)
 
@@ -18,7 +18,7 @@ O **Passa o Bastão** é uma proposta de chatbot que preserva experiências de i
 
 Em empresas juniores, atléticas, centros acadêmicos e projetos de extensão, a saída de integrantes pode deixar lacunas sobre processos, decisões e dificuldades já resolvidas. A proposta é transformar parte desse conhecimento em orientações consultáveis, com autoria e data identificáveis.
 
-**Estágio atual:** definição da proposta e do escopo. O repositório contém a documentação inicial; a aplicação ainda não foi implementada. As funcionalidades e a arquitetura abaixo representam o planejamento.
+O protótipo roda localmente com uma SPA React e uma API Python. Ele permite registrar entrevistas e documentos, revisar e versionar os registros e consultar trechos aprovados com fonte e data.
 
 ## 🧭 Sumário
 
@@ -69,7 +69,7 @@ A hipótese é que uma entrevista guiada facilita o registro de etapas, exceçõ
 | Novo integrante | Consultar orientações e apontar dúvidas ou informações incompletas |
 | Responsável pelo projeto | Revisar conteúdos e manter os registros atualizados |
 
-Os papéis poderão ser acumulados por uma mesma pessoa no piloto. As permissões deverão ser detalhadas antes da implementação.
+Uma mesma pessoa pode acumular papéis. A API aplica a [matriz de permissões](docs/arquitetura.md#permissões) a cada operação.
 
 <a id="funcionamento-e-diferencial"></a>
 ## 💬 Funcionamento e diferencial
@@ -115,7 +115,7 @@ O diferencial proposto é que o chatbot também ajuda a construir sua base de co
 
 ### Requisitos funcionais da primeira versão
 
-| ID | Funcionalidade prevista | Comportamento esperado |
+| ID | Funcionalidade | Comportamento esperado |
 |---|---|---|
 | RF01 | Identificação e perfis | Distinguir quem registra, consulta e revisa conteúdos |
 | RF02 | Entrevista guiada | Conduzir perguntas sobre etapas, dificuldades e recomendações |
@@ -144,7 +144,7 @@ O diferencial proposto é que o chatbot também ajuda a construir sua base de co
 <a id="arquitetura-e-tecnologias"></a>
 ## 🏗️ Arquitetura e tecnologias
 
-A arquitetura conceitual separa a entrevista, a aprovação dos registros e a elaboração de respostas. Sua implementação será definida após o levantamento dos requisitos do piloto.
+A aplicação separa o registro de conteúdo, a revisão e a recuperação de trechos aprovados.
 
 ```mermaid
 flowchart LR
@@ -154,27 +154,26 @@ flowchart LR
     ENT --> DB[(Registros e metadados)]
     API --> BUS[Busca em conteúdos aprovados]
     DB --> BUS
-    BUS --> IA[Elaboração da resposta com IA]
-    IA --> API
+    BUS --> API
+    BUS --> IA[Ollama local opcional]
+    IA --> BUS
 ```
 
-A consulta poderá usar recuperação de informações para fornecer ao modelo os trechos aprovados relevantes à pergunta. O mecanismo de busca será escolhido conforme o volume de conteúdo e os resultados da avaliação. Conteúdos pendentes ou não autorizados não deverão compor as respostas.
-
-| Camada | Decisão pendente |
+| Camada | Implementação |
 |---|---|
-| Interface | Tecnologia para as telas de conversa e revisão |
-| Aplicação | Linguagem, framework e mecanismo de autenticação |
-| Armazenamento | Banco para relatos, atividades e metadados |
-| Busca | Estratégia de recuperação dos conteúdos aprovados |
-| Inteligência artificial | Modelo, provedor e forma de integração |
-| Hospedagem | Ambiente para demonstração do protótipo |
+| Interface | React com Vite |
+| Aplicação | Python com Flask e autenticação Bearer JWT |
+| Armazenamento | MongoDB com PyMongo |
+| Busca | Correspondência lexical em versões aprovadas e autorizadas |
+| Inteligência artificial | Ollama local opcional para selecionar trechos recuperados |
+| Demonstração | Frontend e API em localhost |
 
-A seleção considerará familiaridade da equipe, custo, facilidade de demonstração e tratamento dos dados. Nenhuma dessas tecnologias está definida ou instalada neste repositório.
+Confira o modelo de dados, as transições de estado, a busca e o contrato da API na [documentação de arquitetura](docs/arquitetura.md).
 
 <a id="interfaces-e-dados"></a>
 ## 🖥️ Interfaces e dados
 
-### Telas previstas
+### Telas
 
 1. Identificação do usuário e de sua função.
 2. Conversa para entrevista de passagem.
@@ -182,7 +181,7 @@ A seleção considerará familiaridade da equipe, custo, facilidade de demonstra
 4. Conversa para consulta, com fontes e datas.
 5. Consulta e atualização dos registros por atividade.
 
-### Informações previstas
+### Informações registradas
 
 | Registro | Campos iniciais |
 |---|---|
@@ -192,7 +191,7 @@ A seleção considerará familiaridade da equipe, custo, facilidade de demonstra
 | Fonte documental | Título, origem, data e atividade relacionada |
 | Revisão | Responsável, decisão, observação e data |
 
-O roteiro deverá perguntar sobre sequência de execução, recursos utilizados, dificuldades, soluções e recomendações. O modelo de dados detalhado será produzido durante a implementação.
+O roteiro pergunta sobre etapas, recursos, dificuldades, soluções, decisões e recomendações.
 
 ### Cuidados com as informações
 
@@ -214,7 +213,7 @@ A validação proposta consiste em registrar uma atividade com alguém que a con
 | Usuário sem permissão de revisão | Não consegue aprovar conteúdos |
 | Novo integrante consulta uma atividade | Consegue localizar as etapas registradas e identificar dúvidas restantes |
 
-Os resultados poderão registrar respostas corretas, fontes identificáveis e dúvidas que exigiram ajuda do antigo responsável. Metas quantitativas serão definidas antes do piloto; ainda não há resultados medidos.
+Os [resultados da validação técnica](docs/validacao.md) registram as perguntas, as fontes e as lacunas da demonstração fictícia. A avaliação com integrantes de um projeto participante ainda está pendente.
 
 <a id="planejamento-e-entregaveis"></a>
 ## 🗺️ Planejamento e entregáveis
@@ -223,12 +222,12 @@ Os resultados poderão registrar respostas corretas, fontes identificáveis e d�
 - [x] Documentar a proposta no README.
 - [ ] Selecionar o projeto participante e validar o problema com seus integrantes.
 - [ ] Levantar soluções similares e comparar pelo menos três alternativas.
-- [ ] Definir o roteiro da entrevista e os requisitos detalhados.
-- [ ] Prototipar as interfaces e o modelo de dados.
-- [ ] Definir tecnologias, permissões e tratamento das informações.
-- [ ] Implementar entrevista, revisão e consulta.
-- [ ] Executar os cenários de validação e registrar os resultados.
-- [ ] Preparar a demonstração e a documentação final.
+- [x] Definir o roteiro da entrevista e os requisitos do MVP.
+- [x] Implementar as interfaces e o modelo de dados.
+- [x] Definir tecnologias, permissões e tratamento das informações.
+- [x] Implementar entrevista, revisão e consulta.
+- [x] Executar os cenários técnicos de validação com dados fictícios.
+- [x] Preparar a demonstração local e a documentação do MVP.
 
 | Entregável previsto | Conteúdo |
 |---|---|
@@ -243,16 +242,12 @@ Os resultados poderão registrar respostas corretas, fontes identificáveis e d�
 <a id="organizacao-e-uso-do-repositorio"></a>
 ## 📁 Organização e uso do repositório
 
-Estrutura **sugerida**, a criar conforme as decisões técnicas. Atualmente, o projeto está documentado no `README.md`.
-
 ```text
 .
 ├── README.md
-├── docs/             # Requisitos, pesquisa, arquitetura e avaliação
-├── prototypes/       # Protótipos e referências das interfaces
-├── src/              # Implementação da aplicação
-├── tests/            # Verificações dos comportamentos principais
-└── presentation/     # Material da demonstração e apresentação
+├── backend/          # API Python, persistência e testes
+├── frontend/         # SPA React e testes de navegador
+└── docs/             # Arquitetura, roteiro de demonstração e resultados
 ```
 
 ### Clonar o projeto
@@ -271,7 +266,44 @@ cd "chatbot IA"
 
 ### Instalação e execução
 
-Ainda não há uma aplicação executável. Os pré-requisitos, comandos de instalação, configuração das variáveis de ambiente e execução serão documentados quando a estrutura técnica estiver definida.
+Use Python 3.11 ou superior, Node.js 22.12 ou superior e Docker Compose para iniciar o MongoDB. Com um MongoDB local já disponível, configure `MONGODB_URI` em `backend/.env` e pule o comando do Docker.
+
+Em um terminal PowerShell, a partir da raiz do repositório:
+
+```powershell
+cd backend
+docker compose up -d mongodb
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+$env:MONGODB_DB_NAME = "passa_o_bastao_demo"
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m infrastructure.persistence.demo
+.\.venv\Scripts\python.exe -m flask --app main run --host 127.0.0.1 --port 8000
+```
+
+Em Linux ou macOS, use `.venv/bin/python`, `cp .env.example .env` e `export MONGODB_DB_NAME=passa_o_bastao_demo PYTHONPATH=src` nas etapas equivalentes.
+
+Em outro terminal, a partir da raiz:
+
+```powershell
+cd frontend
+Copy-Item .env.example .env
+npm.cmd ci
+npm.cmd run dev
+```
+
+Em Linux ou macOS, use `cp` e `npm`. Abra [http://localhost:5173](http://localhost:5173). O indicador na tela inicial consulta `GET /api/v1/health` e mostra o estado da conexão. O endpoint retorna HTTP 200 com `{"status":"ok","service":"passa-o-bastao-backend"}`.
+
+As três contas fictícias usam a senha `Bastao-Demo-2026!` na base local de demonstração.
+
+| Perfil | E-mail |
+|---|---|
+| Integrante que registra | `lia@demo.example` |
+| Responsável pela revisão | `beto@demo.example` |
+| Ada Wong - Demo · Novo integrante que consulta | `ada@demo.example` |
+
+`VITE_API_URL` configura a URL da API. Se a porta 8000 estiver ocupada, escolha outra em `--port` e atualize `VITE_API_URL` em `frontend/.env`. Se mudar a origem do frontend, ajuste `CORS_ALLOWED_ORIGINS` em `backend/.env`. `MONGODB_URI` e `JWT_SECRET_KEY` são configurações do backend. O Ollama pode ser ativado apenas no backend conforme o [roteiro de demonstração](docs/demonstracao.md).
 
 ### Organização das contribuições
 

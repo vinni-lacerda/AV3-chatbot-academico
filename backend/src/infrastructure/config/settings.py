@@ -34,6 +34,9 @@ class Settings:
     jwt_secret_key: str
     jwt_algorithm: str
     jwt_access_token_expire_minutes: int
+    ollama_model: str = ""
+    ollama_port: int = 11434
+    ollama_timeout_seconds: float = 12.0
 
 
 @lru_cache
@@ -62,4 +65,7 @@ def get_settings() -> Settings:
         jwt_access_token_expire_minutes=int(
             os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "120")
         ),
+        ollama_model=os.getenv("OLLAMA_MODEL", "").strip(),
+        ollama_port=int(os.getenv("OLLAMA_PORT", "11434")),
+        ollama_timeout_seconds=float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "12")),
     )

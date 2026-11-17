@@ -113,6 +113,8 @@ backend/
 
 ## 🚀 Como Executar com Docker
 
+O [README principal](../README.md#instalação-e-execução) documenta o ambiente local da SPA e da API com dados fictícios em uma base isolada. O fluxo legado abaixo inicia diretamente os serviços do backend e carrega os usuários da equipe.
+
 ### Opção A: Usando `make`
 Para liberar automaticamente as portas `27017` e `8000` (caso outro container esteja usando), construir a imagem, iniciar o MongoDB + Backend e popular o banco com o seed inicial:
 
@@ -195,6 +197,8 @@ Com o backend rodando em `http://localhost:8000`:
 | `POST` | `/api/v1/auth/login` | Pública | Autentica integrante e retorna Bearer Token JWT (`RF01`) |
 | `GET` | `/api/v1/auth/me` | Bearer JWT | Retorna dados e permissões calculadas do usuário autenticado |
 | `GET` | `/api/v1/auth/permissions/review-check` | Bearer JWT (`responsavel`) | Valida permissão exclusiva de revisão (`403` para demais perfis) |
+
+O [contrato das rotas de conhecimento](../docs/arquitetura.md#api) documenta atividades, entrevistas, revisão, fontes e chat.
 
 ---
 

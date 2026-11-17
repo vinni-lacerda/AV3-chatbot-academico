@@ -10,10 +10,17 @@ from domain.exceptions.domain_exceptions import (
     ValidationError,
 )
 from infrastructure.http.contracts import HttpResponse
+from domain.knowledge import KnowledgeConflict, KnowledgeNotFound
 
 
 def map_domain_error_to_http_response(exc: Exception) -> HttpResponse:
     """Traduz exceções do domínio em respostas HTTP sem acoplamento ao Flask."""
+    if isinstance(exc, KnowledgeNotFound):
+        return HttpResponse(404, {"detail": str(exc), "error_code": "KNOWLEDGE_NOT_FOUND"})
+
+    if isinstance(exc, KnowledgeConflict):
+        return HttpResponse(409, {"detail": str(exc), "error_code": "KNOWLEDGE_CONFLICT"})
+
     if isinstance(exc, ValidationError):
         return HttpResponse(
             status_code=400,

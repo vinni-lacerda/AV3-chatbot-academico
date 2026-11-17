@@ -255,6 +255,695 @@
     }
   },
   "paths": {
+    "/api/v1/activities": {
+      "get": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Listar atividades",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Cadastrar atividade",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "responsible_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title",
+                  "description"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/interview/questions": {
+      "get": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Listar perguntas da entrevista",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records": {
+      "get": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Listar registros e versões visíveis",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "library",
+                "mine",
+                "review"
+              ]
+            }
+          },
+          {
+            "name": "activity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rascunho",
+                "pendente",
+                "ajustes_solicitados",
+                "aprovado",
+                "retirado",
+                "substituido"
+              ]
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Criar rascunho",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "activity_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "entrevista",
+                      "documento"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "activity_id",
+                  "kind"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records/{identifier}/draft": {
+      "put": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Salvar rascunho",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "content": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "etapas": {
+                            "type": "string"
+                          },
+                          "recursos": {
+                            "type": "string"
+                          },
+                          "dificuldades": {
+                            "type": "string"
+                          },
+                          "solucoes": {
+                            "type": "string"
+                          },
+                          "decisoes": {
+                            "type": "string"
+                          },
+                          "recomendacoes": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          },
+                          "origin": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "authorized": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "version",
+                  "revision",
+                  "content"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records/{identifier}/submit": {
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Enviar para revisão",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "version",
+                  "revision"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records/{identifier}/revise": {
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Criar nova versão em rascunho",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "version",
+                  "revision"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records/{identifier}/review": {
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Aprovar, solicitar ajustes ou retirar",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "aprovado",
+                      "ajustes_solicitados",
+                      "retirado"
+                    ]
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "version",
+                  "revision",
+                  "decision"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/{identifier}/{version}": {
+      "get": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Inspecionar fonte aprovada",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/chat": {
+      "post": {
+        "tags": [
+          "Conhecimento"
+        ],
+        "summary": "Consultar a base aprovada",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Identificação ausente ou inválida."
+          },
+          "default": {
+            "description": "Erro na solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "question": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "activity_id": {
+                    "type": "string"
+                  },
+                  "context_activity_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "question"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health": {
       "get": {
         "tags": [

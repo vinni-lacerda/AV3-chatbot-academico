@@ -1,0 +1,25 @@
+{
+  "name": "passa-o-bastao-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host localhost --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --host localhost",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "5.3.0",
+    "@fontsource/dm-serif-text": "5.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "vite": "7.3.8"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
