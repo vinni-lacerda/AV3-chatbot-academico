@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "passa-o-bastao-backend"
+version = "0.1.0"
+description = "Backend do chatbot Passa o Bastão (Clean Architecture Agnóstica + SOLID + Flask + MongoDB)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.0.0",
+    "pymongo>=4.9.0",
+    "PyJWT>=2.9.0",
+    "bcrypt>=4.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
