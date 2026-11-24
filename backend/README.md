@@ -175,15 +175,17 @@ Caso esteja no Windows (PowerShell / CMD) ou prefira rodar os comandos do Docker
 
 ---
 
-## 🌱 Contas Fictícias de Demonstração (`demo.py` / `seed.py`)
+## 🌱 Contas Fictícias de Demonstração (`demo.py`)
 
-Ao subir os containers ou rodar `python -m infrastructure.persistence.demo`, o banco `passa_o_bastao_demo` é populado apenas com **dados fictícios identificados**, sem expor credenciais ou relatos reais. A senha de demonstração para as três contas fictícias é **`Bastao-Demo-2026!`**:
+O Docker Compose configura a base `passa_o_bastao_demo` e carrega os dados fictícios. Para executar `python -m infrastructure.persistence.demo` ou `make seed` fora do Compose, defina `MONGODB_DB_NAME=passa_o_bastao_demo` no ambiente ou no `.env` do backend antes da carga. Consulte os passos de execução direta no [README principal](../README.md#instalação-e-execução).
 
-| Nome | E-mail | Identificador Fictício | Perfil (`RF01`) |
-|---|---|---|---|
-| Lia Monteiro · Demo | `lia@demo.example` | `DEMO-0001` | `integrante` (registra entrevistas e documentos) |
-| Beto Alves · Demo | `beto@demo.example` | `DEMO-0002` | `responsavel` (cadastra atividades e revisa conteúdos) |
-| Ada Wong - Demo | `ada@demo.example` | `DEMO-0003` | `novo_integrante` (consulta orientações aprovadas) |
+A senha de demonstração para as três contas fictícias é **`Bastao-Demo-2026!`**.
+
+| Nome | E-mail | Perfil (`RF01`) |
+|---|---|---|
+| Lia Monteiro · Demo | `lia@demo.example` | `integrante` (registra entrevistas e documentos) |
+| Beto Alves · Demo | `beto@demo.example` | `responsavel` (cadastra atividades e revisa conteúdos) |
+| Ada Wong - Demo | `ada@demo.example` | `novo_integrante` (consulta orientações aprovadas) |
 
 ### Conexão no DataGrip / MongoDB Compass
 - **Host:** `localhost`

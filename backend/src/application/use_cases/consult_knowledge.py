@@ -8,7 +8,7 @@ from application.use_cases.manage_knowledge import ManageKnowledge, text_field
 from domain.knowledge import KnowledgeNotFound, QUESTIONS, Status
 
 STOP_WORDS = set(
-    """a ao aos as o os da das de do dos e em na nas no nos para por com um uma
+    """a ao aos as o os da das de do dos e ou em na nas no nos para por com um uma
     me eu se minha meu sobre que qual quais como quando onde quem posso preciso
     vou fazer saber executar assumir atividade projeto funciona isso depois
     devo gente tem ha existe quanto organizar sao proxima proximo voce voces
@@ -131,15 +131,9 @@ def raw_words(text: str) -> set[str]:
 
 
 def terms_match(required: set[str], evidence: set[str]) -> tuple[bool, int]:
-    if not required:
-        return True, 0
     canonical_groups = {stem(term) for term in required}
-    matched = sum(1 for group in canonical_groups if group in evidence)
-    if matched == len(canonical_groups):
-        return True, matched
-    if len(canonical_groups) >= 2 and matched >= len(canonical_groups) - 1:
-        return True, matched
-    return False, matched
+    matched = len(canonical_groups & evidence)
+    return matched == len(canonical_groups), matched
 
 
 def passages(record: dict, version: dict) -> Iterator[tuple[str | None, str, str]]:

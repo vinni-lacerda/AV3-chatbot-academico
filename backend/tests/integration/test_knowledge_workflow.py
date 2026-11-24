@@ -200,6 +200,40 @@ def test_document_seed_and_reference_question(pilot):
     assert call("POST", "/chat", READER, {"question": "Qual é o orçamento das inscrições da feira?"})["gap"]
 
 
+def test_consult_preserves_gap_when_source_omits_requested_detail(pilot):
+    call, _ = pilot
+    result = call("POST", "/chat", READER, {
+        "question": "Qual o prazo de confirmação?",
+        "activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["gap"] is True
+    assert result["sources"] == []
+    assert result["responsible"]["name"] == "Beto Alves · Demo"
+
+
+def test_consult_preserves_previous_activity_on_partial_title_match(pilot):
+    call, _ = pilot
+    other_activity = call("POST", "/activities", REVIEWER, {
+        "title": "Mostra de Confirmação",
+        "description": "Atividade fictícia sem fontes aprovadas.",
+        "responsible_id": call("GET", "/auth/me", REVIEWER)["id"],
+    }, status=201)
+
+    result = call("POST", "/chat", READER, {
+        "question": "Como reenviar uma confirmação?",
+        "context_activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["activity_id"] == DEMO_ACTIVITY_ID
+    assert result["sources"][0]["record_id"] == DEMO_DOCUMENT_ID
+
+    result = call("POST", "/chat", READER, {
+        "question": "Como reenviar uma confirmação na Mostra de Confirmação?",
+        "context_activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["activity_id"] == other_activity["id"]
+    assert result["gap"] is True
+
+
 def test_retrieval_handles_inflections_and_synonyms_while_preserving_gaps(pilot):
     call, _ = pilot
     record_id = str(uuid4())
