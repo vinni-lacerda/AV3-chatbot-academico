@@ -10,7 +10,7 @@ from infrastructure.http.flask.app_factory import create_flask_app
 from infrastructure.persistence.memory.in_memory_user_repository import (
     InMemoryUserRepository,
 )
-from infrastructure.persistence.seed import seed_initial_users
+from infrastructure.persistence.seed import DEFAULT_SEED_PASSWORD, seed_initial_users
 from infrastructure.security.bcrypt_password_hasher import BcryptPasswordHasher
 
 
@@ -123,7 +123,7 @@ def test_flask_adapter_register_login_and_me_endpoints(
             "name": "Novo Integrante Publico",
             "email": "publico@universidade.edu.br",
             "password": "Password123!",
-            "academic_id": "12725156424",
+            "academic_id": "DEMO-9999",
         },
     )
     assert reg_response.status_code == 201
@@ -153,8 +153,8 @@ def test_flask_adapter_register_login_and_me_endpoints(
     seed_login = client.post(
         "/api/v1/auth/login",
         json={
-            "email": "vinicius@universidade.edu.br",
-            "password": "PassaOBastao123!",
+            "email": "beto@demo.example",
+            "password": DEFAULT_SEED_PASSWORD,
         },
     )
     assert seed_login.status_code == 200
@@ -208,8 +208,8 @@ def test_flask_error_responses_for_conflict_and_unauthorized(
 ) -> None:
     """Deve traduzir exceções de domínio em status HTTP 400, 401 e 409 com headers apropriados."""
     payload = {
-        "name": "Vinicius Lacerda",
-        "email": "vinicius.novo@universidade.edu.br",
+        "name": "Integrante Demo",
+        "email": "integrante.novo@demo.example",
         "password": "Password123!",
     }
     first = client.post("/api/v1/auth/register", json=payload)
@@ -221,7 +221,7 @@ def test_flask_error_responses_for_conflict_and_unauthorized(
 
     invalid_login = client.post(
         "/api/v1/auth/login",
-        json={"email": "vinicius.novo@universidade.edu.br", "password": " errada "},
+        json={"email": "integrante.novo@demo.example", "password": " errada "},
     )
     assert invalid_login.status_code == 401
     assert invalid_login.headers.get("WWW-Authenticate") == "Bearer"

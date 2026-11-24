@@ -14,7 +14,7 @@ logs:
 	docker compose logs -f
 
 seed:
-	PYTHONPATH=src .venv/bin/python3 -m infrastructure.persistence.seed
+	PYTHONPATH=src .venv/bin/python3 -m infrastructure.persistence.demo
 
 test:
 	.venv/bin/pytest -v

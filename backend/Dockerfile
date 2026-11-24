@@ -13,4 +13,4 @@ COPY src ./src
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python3 -m infrastructure.persistence.seed && python3 src/main.py"]
+CMD ["sh", "-c", "python3 -m infrastructure.persistence.demo && python3 src/main.py"]

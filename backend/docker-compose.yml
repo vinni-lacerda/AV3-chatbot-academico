@@ -6,7 +6,7 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_DATABASE: passa_o_bastao
+      MONGO_INITDB_DATABASE: passa_o_bastao_demo
     volumes:
       - mongodb_data:/data/db
       - ./docker/mongodb/init-seed.js:/docker-entrypoint-initdb.d/init-seed.js:ro
@@ -29,7 +29,7 @@ services:
       APP_ENV: "development"
       DEBUG: "true"
       MONGODB_URI: "mongodb://mongodb:27017"
-      MONGODB_DB_NAME: "passa_o_bastao"
+      MONGODB_DB_NAME: "passa_o_bastao_demo"
       JWT_SECRET_KEY: "dev-secret-key-change-in-production-min-32-bytes"
       JWT_ALGORITHM: "HS256"
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "120"
