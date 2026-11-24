@@ -200,6 +200,87 @@ def test_document_seed_and_reference_question(pilot):
     assert call("POST", "/chat", READER, {"question": "Qual é o orçamento das inscrições da feira?"})["gap"]
 
 
+def test_consult_preserves_gap_when_source_omits_requested_detail(pilot):
+    call, _ = pilot
+    result = call("POST", "/chat", READER, {
+        "question": "Qual o prazo de confirmação?",
+        "activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["gap"] is True
+    assert result["sources"] == []
+    assert result["responsible"]["name"] == "Beto Alves · Demo"
+
+
+def test_consult_preserves_previous_activity_on_partial_title_match(pilot):
+    call, _ = pilot
+    other_activity = call("POST", "/activities", REVIEWER, {
+        "title": "Mostra de Confirmação",
+        "description": "Atividade fictícia sem fontes aprovadas.",
+        "responsible_id": call("GET", "/auth/me", REVIEWER)["id"],
+    }, status=201)
+
+    result = call("POST", "/chat", READER, {
+        "question": "Como reenviar uma confirmação?",
+        "context_activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["activity_id"] == DEMO_ACTIVITY_ID
+    assert result["sources"][0]["record_id"] == DEMO_DOCUMENT_ID
+
+    result = call("POST", "/chat", READER, {
+        "question": "Como reenviar uma confirmação na Mostra de Confirmação?",
+        "context_activity_id": DEMO_ACTIVITY_ID,
+    })
+    assert result["activity_id"] == other_activity["id"]
+    assert result["gap"] is True
+
+
+def test_retrieval_handles_inflections_and_synonyms_while_preserving_gaps(pilot):
+    call, _ = pilot
+    record_id = str(uuid4())
+    path = f"/records/{record_id}"
+    draft = call("POST", "/records", AUTHOR, {
+        "id": record_id, "activity_id": DEMO_ACTIVITY_ID, "kind": "entrevista",
+    }, status=201)
+    saved = call("PUT", f"{path}/draft", AUTHOR, target(draft, content=INITIAL, authorized=True))
+    pending = call("POST", f"{path}/submit", AUTHOR, target(saved))
+    call("POST", f"{path}/review", REVIEWER, target(pending, decision="aprovado"))
+
+    try:
+        # Sinônimos e flexões sobre o documento aprovado ("Guia de confirmação da feira")
+        for question in (
+            "Como faço o reenvio das confirmações?",
+            "Como mandar o comprovante filtrando o cartão pendente na tabela?",
+        ):
+            res = call("POST", "/chat", READER, {"question": question})
+            assert not res["gap"], question
+            assert any(item["record_id"] == DEMO_DOCUMENT_ID for item in res["sources"]), question
+
+        # Sinônimos e flexões sobre a entrevista aprovada
+        cases = (
+            ("Qual procedimento inicial para validar os cadastros no formulário Solstício?", INITIAL["etapas"]),
+            ("O que fazer quando o aviso demora ou ocorre atraso na notificação?", INITIAL["dificuldades"]),
+            ("Por que decidimos centralizar os cadastros para evitar inscrições repetidas?", INITIAL["decisoes"]),
+            ("Quais orientações e dicas vocês dão para revisar no fim do turno?", INITIAL["recomendacoes"]),
+        )
+        for question, expected_excerpt in cases:
+            res = call("POST", "/chat", READER, {"question": question, "activity_id": DEMO_ACTIVITY_ID})
+            assert not res["gap"], question
+            assert any(item["excerpt"] == expected_excerpt for item in res["sources"]), question
+
+        # Caso sem cobertura deve continuar sinalizando lacuna e responsável
+        gap_res = call("POST", "/chat", READER, {
+            "question": "Qual é o valor do patrocínio e reembolso de transporte da feira?",
+            "activity_id": DEMO_ACTIVITY_ID,
+        })
+        assert gap_res["gap"] is True
+        assert gap_res["sources"] == []
+        assert gap_res["responsible"]["name"] == "Beto Alves · Demo"
+    finally:
+        latest = call("GET", f"/records?view=mine&activity_id={DEMO_ACTIVITY_ID}", AUTHOR)["items"]
+        current = next(item for item in latest if item["id"] == record_id)
+        call("POST", f"{path}/review", REVIEWER, target(current, decision="retirado"))
+
+
 def test_approval_before_use_and_withdrawal_during_ai(pilot):
     call, container = pilot
     document_id = str(uuid4())

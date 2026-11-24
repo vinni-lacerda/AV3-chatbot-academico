@@ -8,25 +8,132 @@ from application.use_cases.manage_knowledge import ManageKnowledge, text_field
 from domain.knowledge import KnowledgeNotFound, QUESTIONS, Status
 
 STOP_WORDS = set(
-    """a ao aos as o os da das de do dos e em na nas no nos para por com um uma
+    """a ao aos as o os da das de do dos e ou em na nas no nos para por com um uma
     me eu se minha meu sobre que qual quais como quando onde quem posso preciso
     vou fazer saber executar assumir atividade projeto funciona isso depois
-    devo gente tem ha existe quanto organizar sao proxima proximo""".split()
+    devo gente tem ha existe quanto organizar sao proxima proximo voce voces
+    dao dar faco cada""".split()
 )
-TOPICS = {
-    "etapas": {"etapa", "etapas", "passo", "passos", "primeiro", "primeira", "inicio", "iniciar", "comeco", "comecar"},
-    "recursos": {"recurso", "recursos", "ferramenta", "ferramentas", "material", "materiais"},
-    "dificuldades": {"dificuldade", "dificuldades", "problema", "problemas"},
-    "solucoes": {"solucao", "solucoes", "resolver", "resolvo", "evitar"},
-    "decisoes": {"decisao", "decisoes", "decidir"},
-    "recomendacoes": {"recomendacao", "recomendacoes", "recomenda", "dica", "dicas", "conferir"},
+SYNONYMS = {
+    "reenvio": "reenviar",
+    "mandar": "reenviar",
+    "enviar": "reenviar",
+    "planilhas": "planilha",
+    "tabela": "planilha",
+    "tabelas": "planilha",
+    "cartao": "cartoes",
+    "ficha": "cartoes",
+    "fichas": "cartoes",
+    "confirmacoes": "confirmacao",
+    "comprovante": "confirmacao",
+    "comprovantes": "confirmacao",
+    "atraso": "atrasar",
+    "atrasos": "atrasar",
+    "atrasam": "atrasar",
+    "atrasada": "atrasar",
+    "atrasadas": "atrasar",
+    "demora": "atrasar",
+    "demoram": "atrasar",
+    "demorar": "atrasar",
+    "ocorre": "podem",
+    "ocorrem": "podem",
+    "ocorrer": "podem",
+    "notificacao": "notificacoes",
+    "aviso": "notificacoes",
+    "avisos": "notificacoes",
+    "alerta": "notificacoes",
+    "alertas": "notificacoes",
+    "duplicada": "duplicatas",
+    "duplicadas": "duplicatas",
+    "duplicidade": "duplicatas",
+    "duplicidades": "duplicatas",
+    "repetida": "duplicatas",
+    "repetidas": "duplicatas",
+    "formularios": "formulario",
+    "inscricao": "inscricoes",
+    "cadastro": "inscricoes",
+    "cadastros": "inscricoes",
+    "mensagens": "mensagem",
+    "email": "entrada",
+    "emails": "entrada",
 }
+SUFFIXES = (
+    "amentos", "imentos", "amento", "imento", "acoes", "icoes", "acao", "icao",
+    "adoras", "adores", "adora", "ador", "aveis", "iveis", "avel", "ivel",
+    "amos", "emos", "imos", "ando", "endo", "indo", "aram", "eram", "iram",
+    "arao", "erao", "irao", "adas", "ados", "idas", "idos", "ada", "ado",
+    "ida", "ido", "ares", "eres", "ires", "am", "em", "ar", "er", "ir",
+    "oes", "ais", "eis", "ois", "ns", "es", "is", "os", "as", "s", "a", "e", "o",
+)
+
+
+def stem(token: str) -> str:
+    token = SYNONYMS.get(token, token)
+    if token.isdigit() or len(token) <= 3:
+        return token
+    for suffix in SUFFIXES:
+        if token.endswith(suffix) and len(token) - len(suffix) >= 4:
+            token = token[: -len(suffix)]
+            break
+    return token
+
+
+def normalize_tokens(items: set[str] | frozenset[str]) -> set[str]:
+    result = set(items)
+    for item in items:
+        mapped = SYNONYMS.get(item, item)
+        result.add(mapped)
+        result.add(stem(item))
+    return result
+
+
+RAW_TOPICS = {
+    "etapas": {
+        "etapa", "etapas", "passo", "passos", "primeiro", "primeira",
+        "inicio", "iniciar", "comeco", "comecar", "procedimento", "procedimentos",
+        "roteiro", "ordem", "sequencia", "inicial",
+    },
+    "recursos": {
+        "recurso", "recursos", "ferramenta", "ferramentas", "material", "materiais",
+        "acesso", "acessos", "sistema", "sistemas", "documento", "documentos",
+    },
+    "dificuldades": {
+        "dificuldade", "dificuldades", "problema", "problemas", "erro", "erros",
+        "falha", "falhas", "obstaculo", "obstaculos", "imprevisto", "imprevistos",
+    },
+    "solucoes": {
+        "solucao", "solucoes", "resolver", "resolvo", "evitar", "corrigir",
+        "correcao", "contornar", "saida", "tratamento",
+    },
+    "decisoes": {
+        "decisao", "decisoes", "decidir", "decidimos", "escolha", "escolhas",
+        "motivo", "motivos", "criterio", "criterios", "definicao",
+    },
+    "recomendacoes": {
+        "recomendacao", "recomendacoes", "recomenda", "dica", "dicas", "conferir",
+        "orientacao", "orientacoes", "conselho", "conselhos", "cuidado", "cuidados",
+    },
+}
+TOPICS = {key: normalize_tokens(aliases) for key, aliases in RAW_TOPICS.items()}
 
 
 def words(text: str) -> set[str]:
     normalized = unicodedata.normalize("NFKD", text.lower())
     plain = "".join(char for char in normalized if not unicodedata.combining(char))
+    raw = set(re.findall(r"[a-z0-9]+", plain)) - STOP_WORDS
+    return normalize_tokens(raw)
+
+
+def raw_words(text: str) -> set[str]:
+    normalized = unicodedata.normalize("NFKD", text.lower())
+    plain = "".join(char for char in normalized if not unicodedata.combining(char))
     return set(re.findall(r"[a-z0-9]+", plain)) - STOP_WORDS
+
+
+def terms_match(required: set[str], evidence: set[str]) -> tuple[bool, int]:
+    canonical_groups = {stem(term) for term in required}
+    matched = len(canonical_groups & evidence)
+    return matched == len(canonical_groups), matched
 
 
 def passages(record: dict, version: dict) -> Iterator[tuple[str | None, str, str]]:
@@ -53,7 +160,7 @@ class ConsultKnowledge:
         question = text_field(body, "question", 500)
         scope = text_field(body, "activity_id", 64, required=False)
         previous = text_field(body, "context_activity_id", 64, required=False)
-        terms = words(question)
+        terms = raw_words(question)
         activity = self.resolve_activity(terms, scope, previous)
         activity_id = activity["id"] if activity else None
         candidates = self.retrieve(terms, activity)
@@ -96,11 +203,15 @@ class ConsultKnowledge:
     def resolve_activity(self, terms: set[str], scope: str, previous: str) -> dict | None:
         if scope:
             return self.knowledge.activity(scope)
-        matches = [
-            (len(named), activity)
-            for activity in self.knowledge.activities()
-            if (named := words(activity["title"])) and named <= terms
-        ]
+        expanded_terms = normalize_tokens(terms)
+        matches = []
+        for activity in self.knowledge.activities():
+            named = raw_words(activity["title"])
+            if not named:
+                continue
+            ok, score = terms_match(named, expanded_terms)
+            if ok:
+                matches.append((score, activity))
         matches.sort(key=lambda match: match[0], reverse=True)
         if matches and (len(matches) == 1 or matches[0][0] > matches[1][0]):
             return matches[0][1]
@@ -109,9 +220,12 @@ class ConsultKnowledge:
         return None
 
     def retrieve(self, terms: set[str], activity: dict | None) -> list[dict]:
-        focus = terms - words(activity["title"]) if activity else terms
-        topics = {key for key, aliases in TOPICS.items() if focus & aliases}
-        details = focus.difference(*(TOPICS[key] for key in topics))
+        activity_terms = words(activity["title"]) if activity else set()
+        focus = {term for term in terms if term not in activity_terms and stem(term) not in activity_terms}
+        expanded_focus = normalize_tokens(focus)
+        topics = {key for key, aliases in TOPICS.items() if expanded_focus & aliases}
+        topic_tokens = set().union(*(TOPICS[key] for key in topics)) if topics else set()
+        details = {term for term in focus if term not in topic_tokens and stem(term) not in topic_tokens}
         if not details and not (topics and activity):
             return []
         query = {"versions.status": Status.APPROVED.value}
@@ -127,11 +241,17 @@ class ConsultKnowledge:
                     continue
                 content = version["content"]
                 for key, title, excerpt in passages(record, version):
-                    evidence = words(excerpt) | (words(title) if key is None else set())
-                    has_topic = key in topics or any(evidence & TOPICS[topic] for topic in topics)
-                    if not excerpt or not details <= evidence or (topics and not has_topic):
+                    if not excerpt:
                         continue
-                    matches.append((len(details & words(excerpt)), {
+                    excerpt_words = words(excerpt)
+                    evidence = excerpt_words | (words(title) if key is None else set())
+                    has_topic = key in topics or any(evidence & TOPICS[topic] for topic in topics)
+                    ok, matched_count = terms_match(details, evidence)
+                    if not ok or (topics and not has_topic):
+                        continue
+                    _, excerpt_score = terms_match(details, excerpt_words)
+                    topic_bonus = 1 if (key in topics) else 0
+                    matches.append((matched_count * 10 + excerpt_score + topic_bonus, {
                         "record_id": record["_id"], "version": version["number"],
                         "activity_id": item["id"], "activity": item["title"], "title": title,
                         "author": record["author"]["name"],
