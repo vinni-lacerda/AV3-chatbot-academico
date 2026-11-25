@@ -14,9 +14,9 @@
 
 ## 📌 Visão geral
 
-O **Passa o Bastão** é uma proposta de chatbot que preserva experiências de integrantes de projetos universitários e ajuda novos membros a assumir atividades. A solução combina uma entrevista guiada para registrar conhecimento, revisão por um responsável e consulta por perguntas em linguagem natural.
+O **Passa o Bastão** é um chatbot que ajuda novos integrantes a assumir atividades quando alguém sai de uma equipe universitária. A solução combina entrevista guiada, revisão humana e consulta por perguntas em linguagem natural.
 
-Em empresas juniores, atléticas, centros acadêmicos e projetos de extensão, a saída de integrantes pode deixar lacunas sobre processos, decisões e dificuldades já resolvidas. A proposta é transformar parte desse conhecimento em orientações consultáveis, com autoria e data identificáveis.
+Num diretório acadêmico, isso pode envolver reservar salas, organizar o credenciamento de um evento ou encaminhar demandas estudantis. Numa equipe de desenvolvimento, pode envolver rodar o sistema localmente, entender como os componentes se comunicam e descobrir por que uma decisão de arquitetura foi tomada. O chatbot ajuda a registrar esse contexto com autoria e data a partir de relatos e documentos autorizados da equipe.
 
 O protótipo roda localmente com uma SPA React e uma API Python. Ele permite registrar entrevistas e documentos, revisar e versionar os registros e consultar trechos aprovados com fonte e data.
 
@@ -37,15 +37,17 @@ O protótipo roda localmente com uma SPA React e uma API Python. Ele permite reg
 <a id="problema-e-objetivos"></a>
 ## 🎯 Problema e objetivos
 
-**Problema central:** como registrar o conhecimento de quem deixa uma equipe e permitir que novos integrantes encontrem orientações confiáveis para assumir suas responsabilidades?
+**Problema central:** como preservar o conhecimento de quem deixa uma equipe universitária para que novos integrantes consigam assumir suas atividades quando a documentação é incompleta?
+
+A ideia do **Passa o Bastão** surgiu da experiência de Vinicius Lacerda Santos no diretório acadêmico, onde ele vivenciou as dificuldades de transferir conhecimento entre integrantes.
 
 A hipótese é que uma entrevista guiada facilita o registro de etapas, exceções e aprendizados que poderiam não aparecer em uma documentação espontânea. Essa hipótese será avaliada no piloto.
 
-**Objetivo geral:** desenvolver um protótipo de chatbot para registrar, organizar e disponibilizar conhecimento sobre atividades de um projeto universitário.
+**Objetivo geral:** desenvolver um protótipo de chatbot para registrar, organizar e disponibilizar conhecimento sobre rotinas de equipe e atividades técnicas em projetos universitários.
 
 **Objetivos específicos:**
 
-- Coletar relatos sobre atividades, dificuldades, decisões e recomendações.
+- Coletar relatos sobre processos, ferramentas, decisões e problemas recorrentes, incluindo configuração de ambientes e manutenção de software.
 - Organizar os registros por atividade, autor e data.
 - Permitir revisão humana antes de liberar conteúdos para consulta.
 - Responder perguntas usando informações aprovadas e indicando suas fontes.
@@ -57,8 +59,8 @@ A hipótese é que uma entrevista guiada facilita o registro de etapas, exceçõ
 
 | Definição | Planejamento inicial |
 |---|---|
-| Unidade do piloto | Um único projeto universitário, a selecionar |
-| Atividades cobertas | Conjunto pequeno de atividades, definido com a equipe participante |
+| Unidade do piloto | Uma equipe de um projeto universitário, a selecionar |
+| Atividades cobertas | Um conjunto pequeno de rotinas ou tarefas técnicas, a definir com a equipe participante |
 | Fontes iniciais | Entrevistas e documentos autorizados do projeto |
 | Resultado esperado | Protótipo que demonstre registro, revisão e consulta de conhecimento |
 | Parceria | Nenhuma parceria confirmada até o momento |
@@ -78,17 +80,19 @@ O chatbot atuará em dois momentos: na coleta do conhecimento e na consulta por 
 
 ### Exemplo de entrevista
 
-> **Bot:** Qual atividade você executava e que outra pessoa precisará assumir?
->
-> **Integrante:** Eu organizava as inscrições da feira.
->
-> **Bot:** Quais eram as etapas? Qual delas costumava causar problemas?
->
-> **Integrante:** Algumas pessoas não recebiam a confirmação.
->
-> **Bot:** Como vocês identificavam e resolviam isso?
+Em um portal estudantil fictício, Lia está passando a manutenção das notificações para quem chega à equipe.
 
-Depois, um novo integrante poderá perguntar: **“Vou organizar as inscrições da próxima feira. Por onde começo e o que preciso conferir?”**
+> **Bot:** Qual parte do sistema você mantinha?
+>
+> **Lia:** Eu mantinha o envio de notificações. A API grava a inscrição e coloca o envio em uma fila. Um worker consome a fila e envia a mensagem.
+>
+> **Bot:** Por que a equipe separou o envio em um worker?
+>
+> **Lia:** Quando o provedor de e-mail demorava, a inscrição demorava junto. Com a fila, o usuário conclui a inscrição e o worker pode tentar o envio de novo em caso de falha.
+>
+> **Bot:** Como quem assume a manutenção pode verificar se uma mensagem está aguardando envio ou falhou?
+
+Após a aprovação do registro, um novo integrante pode perguntar **“Por que o envio de notificações usa uma fila?”**. O mesmo fluxo pode preservar uma rotina do diretório acadêmico, com perguntas como **“Como solicitar uma sala?”**. Veja os dois cenários no [roteiro de demonstração](docs/demonstracao.md#apresentação-rápida).
 
 A resposta deverá reunir as orientações aprovadas e identificar sua origem e data. Quando faltar informação, o bot deverá explicitar a lacuna e indicar o responsável cadastrado pelo assunto, quando disponível.
 
@@ -202,7 +206,7 @@ Dados fictícios poderão ser utilizados nas primeiras demonstrações, identifi
 <a id="validacao-e-criterios-de-aceite"></a>
 ## ✅ Validação e critérios de aceite
 
-A validação proposta consiste em registrar uma atividade com alguém que a conhece e pedir a um novo integrante que busque orientações pelo chatbot. A equipe deverá preparar perguntas de referência, inclusive perguntas cujas respostas não estejam na base.
+A validação proposta consiste em registrar uma atividade com quem a conhece e pedir a um novo integrante que use o chatbot para explicar as etapas e executar uma tarefa inicial. No caso de software, a equipe pode avaliar também se a pessoa consegue localizar os componentes envolvidos e explicar uma decisão técnica. A equipe deverá preparar perguntas de referência, inclusive perguntas cujas respostas não estejam na base.
 
 | Cenário de avaliação | Critério de aceite previsto |
 |---|---|
@@ -213,14 +217,14 @@ A validação proposta consiste em registrar uma atividade com alguém que a con
 | Usuário sem permissão de revisão | Não consegue aprovar conteúdos |
 | Novo integrante consulta uma atividade | Consegue localizar as etapas registradas e identificar dúvidas restantes |
 
-Os [resultados da validação técnica](docs/validacao.md) registram as perguntas, as fontes e as lacunas da demonstração fictícia. A avaliação com integrantes de um projeto participante ainda está pendente.
+Os [resultados da validação técnica](docs/validacao.md) registram as perguntas, as fontes e as lacunas da demonstração fictícia. No piloto, ainda falta avaliar se um novo integrante consegue usar o protótipo para assumir uma atividade real da equipe participante.
 
 <a id="planejamento-e-entregaveis"></a>
 ## 🗺️ Planejamento e entregáveis
 
 - [x] Definir a ideia e o recorte inicial.
 - [x] Documentar a proposta no README.
-- [ ] Selecionar o projeto participante e validar o problema com seus integrantes.
+- [ ] Definir a equipe participante e avaliar com ela se o protótipo facilita a passagem de uma atividade real.
 - [ ] Levantar soluções similares e comparar pelo menos três alternativas.
 - [x] Definir o roteiro da entrevista e os requisitos do MVP.
 - [x] Implementar as interfaces e o modelo de dados.

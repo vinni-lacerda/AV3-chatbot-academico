@@ -70,6 +70,66 @@ def target(record, **values):
     return {"version": record["versions"][-1]["number"], "revision": record["revision"], **values}
 
 
+def test_academic_directory_demo_scenarios(pilot):
+    call, _ = pilot
+    activities = call("GET", "/activities", READER)["items"]
+    questions = (
+        ("Credenciamento do evento de tecnologia", "O que fazer se o QR code falhar?", "marque a presença"),
+        ("Reserva de salas", "Como solicitar uma sala?", "calendário de espaços"),
+        ("Encaminhamento de demandas estudantis", "Como reiterar o pedido?", "número do protocolo"),
+    )
+    for title, question, excerpt in questions:
+        activity, = [item for item in activities if item["title"] == title]
+        result = call("POST", "/chat", READER, {"activity_id": activity["id"], "question": question})
+        assert result["gap"] is False
+        source, = result["sources"]
+        assert excerpt in source["excerpt"]
+        assert "fictício" in source["origin"]
+        assert source["date"]
+
+    event = next(item for item in activities if item["title"] == questions[0][0])
+    result = call("POST", "/chat", READER, {
+        "activity_id": event["id"], "question": "Qual é o orçamento do evento?",
+    })
+    assert result["gap"] is True
+    assert result["responsible"] == event["responsible"]
+
+
+def test_software_handoff_demo(pilot):
+    call, _ = pilot
+    activities = {item["title"]: item for item in call("GET", "/activities", READER)["items"]}
+    environment = activities["Ambiente local do Portal Atlas"]
+    notifications = activities["Manutenção de notificações do Portal Atlas"]
+
+    def ask(activity, question):
+        return call("POST", "/chat", READER, {"activity_id": activity["id"], "question": question})
+
+    setup, = ask(environment, "Como iniciar a API localmente?")["sources"]
+    assert "execute as migrações" in setup["excerpt"]
+    architecture, = ask(notifications, "Por que o envio de notificações usa uma fila?")["sources"]
+    assert "porque o provedor de e-mail pode demorar" in architecture["excerpt"]
+    reprocessing, = ask(notifications, "Como reprocessar notificações?")["sources"]
+    assert "Confira se o status é FAILED" in reprocessing["excerpt"]
+
+    question = "Como identificar notificações duplicadas?"
+    gap = ask(notifications, question)
+    assert gap["gap"] and gap["responsible"] == notifications["responsible"]
+    record_id = str(uuid4())
+    path = f"/records/{record_id}"
+    draft = call("POST", "/records", AUTHOR, {
+        "id": record_id, "activity_id": notifications["id"], "kind": "entrevista",
+    }, status=201)
+    steps = "Para identificar notificações duplicadas, localize o identificador da inscrição no painel da fila e compare o histórico de tentativas."
+    saved = call("PUT", f"{path}/draft", AUTHOR, target(draft, content={**INITIAL, "etapas": steps}, authorized=True))
+    pending = call("POST", f"{path}/submit", AUTHOR, target(saved))
+    assert ask(notifications, question)["gap"]
+    approved = call("POST", f"{path}/review", REVIEWER, target(pending, decision="aprovado"))
+    source, = ask(notifications, question)["sources"]
+    assert source["record_id"] == record_id and source["excerpt"] == steps
+    call("POST", f"{path}/review", REVIEWER, target(approved, decision="retirado"))
+    assert ask(notifications, question)["gap"]
+
+
 def test_activity_requires_an_active_reviewer_and_can_be_read(pilot):
     call, container = pilot
     data = {"title": "Organização de oficinas", "description": "Programa fictício de oficinas."}

@@ -28,7 +28,7 @@ function Login({ onLogin, expired }) {
       <Brand />
       <div className="login-intro">
         <h1>O conhecimento fica com a equipe.</h1>
-        <p>Registre o que aprendeu no projeto e ajude quem vai assumir a próxima atividade.</p>
+        <p>Registre as rotinas da equipe e as decisões técnicas do projeto para ajudar quem vai assumir.</p>
       </div>
       <span className="cover-note">Memória do projeto universitário</span>
     </section>

@@ -7,7 +7,7 @@ A validação técnica usa três contas fictícias e atividades inventadas. A pe
 - Responder corretamente a pelo menos 4 de 5 perguntas cobertas, com fonte e data conferíveis em todas as respostas.
 - Identificar as lacunas em 3 de 3 perguntas sem cobertura.
 - Liberar zero registros pendentes, não autorizados, retirados ou substituídos em consultas novas.
-- Permitir que um novo integrante descreva as etapas iniciais da atividade após consultar o chatbot. Anotar quais dúvidas ainda precisaram ser encaminhadas ao responsável.
+- Permitir que um novo integrante descreva os passos para assumir uma atividade. Em uma tarefa de software, verificar também se ele localiza os componentes envolvidos e explica a decisão técnica registrada. Anotar as dúvidas encaminhadas ao responsável.
 
 ## Perguntas e resultados com dados fictícios
 
