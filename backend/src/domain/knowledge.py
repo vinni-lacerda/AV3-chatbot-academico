@@ -15,12 +15,16 @@ class Status(StrEnum):
 
 
 QUESTIONS = (
-    ("etapas", "Etapas", "Como você executava a atividade, desde o primeiro passo?"),
-    ("recursos", "Recursos", "Quais ferramentas, materiais ou acessos eram necessários?"),
+    (
+        "etapas", "Etapas",
+        "Como você executava a atividade, desde o primeiro passo? "
+        "Se for manutenção de software, por onde o fluxo começa e quais componentes ele percorre?",
+    ),
+    ("recursos", "Recursos", "Quais ferramentas, repositórios, dependências ou acessos eram necessários?"),
     ("dificuldades", "Dificuldades", "Quais dificuldades apareciam com mais frequência?"),
     ("solucoes", "Soluções", "Como você resolvia ou evitava essas dificuldades?"),
-    ("decisoes", "Decisões", "Quais decisões foram tomadas e por quê?"),
-    ("recomendacoes", "Recomendações", "Que recomendações você daria a quem vai assumir?"),
+    ("decisoes", "Decisões", "Quais decisões foram tomadas e por quê? Que problema a solução escolhida resolveu?"),
+    ("recomendacoes", "Recomendações", "O que quem vai assumir deve conferir antes de fazer a primeira alteração?"),
 )
 
 

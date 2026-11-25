@@ -66,18 +66,19 @@ export function Chat({ api, activities }) {
     if (log.current) log.current.scrollTop = log.current.scrollHeight
   }, [turns, sending, action.problem])
 
-  function send(event) {
-    event.preventDefault()
-    const text = question.trim()
-    if (!text) return
+  function ask(text, scope, previousActivity) {
     action.run(async () => {
       setSending(text)
       try {
-        const reply = await api('/chat', {
+        let reply = await api('/chat', {
           method: 'POST',
-          body: { question: text, activity_id: activity, context_activity_id: context },
+          body: { question: text, activity_id: scope, context_activity_id: previousActivity },
         })
-        setTurns(previous => [...previous, { text, reply }])
+        if (reply.gap && !scope && previousActivity && reply.activity_id === previousActivity) {
+          const broadReply = await api('/chat', { method: 'POST', body: { question: text } })
+          if (!broadReply.gap) reply = broadReply
+        }
+        setTurns(previous => [...previous, { text, reply, scope }])
         setContext(reply.activity_id || '')
         setQuestion('')
       } finally {
@@ -85,6 +86,12 @@ export function Chat({ api, activities }) {
         requestAnimationFrame(() => input.current?.focus())
       }
     })
+  }
+
+  function send(event) {
+    event.preventDefault()
+    const text = question.trim()
+    if (text) ask(text, activity, context)
   }
 
   return <>
@@ -107,11 +114,18 @@ export function Chat({ api, activities }) {
         {turns.length === 0 && !sending && <div className="chat-empty">
           <span className="chat-mark" aria-hidden="true">↗</span>
           <h2>O que você quer saber?</h2>
-          <p>Você pode perguntar por etapas, ferramentas ou soluções de uma atividade.</p>
+          <p>Pergunte como executar uma tarefa, configurar o ambiente ou entender uma decisão da equipe.</p>
         </div>}
-        {turns.map(({ text, reply }, index) => <div className="chat-turn" key={index}>
+        {turns.map(({ text, reply, scope }, index) => <div className="chat-turn" key={index}>
           <div className="chat-question"><span className="speaker">Você</span><p className="preserve">{text}</p></div>
           <Reply api={api} reply={reply} />
+          {reply.gap && scope && index === turns.length - 1 && !question.trim() &&
+            <button type="button" className="secondary" disabled={action.busy} onClick={() => {
+              setActivity('')
+              setContext('')
+              setQuestion(text)
+              ask(text, '', '')
+            }}>Buscar em todas as atividades</button>}
         </div>)}
         {sending && <div className="chat-turn">
           <div className="chat-question"><span className="speaker">Você</span><p className="preserve">{sending}</p></div>

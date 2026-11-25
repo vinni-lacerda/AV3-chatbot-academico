@@ -16,6 +16,25 @@ async function ask(page, question) {
   await page.getByLabel('Sua pergunta').press('Enter')
 }
 
+test('encontra a orientação de ambiente após consultar outra atividade', async ({ page }) => {
+  await login(page, 'ada@demo.example')
+  const activity = page.getByRole('combobox', { name: 'Atividade', exact: true })
+  const setupQuestion = 'Como iniciar a API localmente?'
+
+  await ask(page, 'Como solicitar uma sala?')
+  await expect(page.getByText(/confira o calendário de espaços/)).toBeVisible()
+  await ask(page, setupQuestion)
+  await expect(page.getByText(/execute as migrações/)).toBeVisible()
+
+  await activity.selectOption({ label: 'Reserva de salas' })
+  await ask(page, setupQuestion)
+  const retry = page.getByRole('button', { name: 'Buscar em todas as atividades' })
+  await expect(retry).toBeVisible()
+  await retry.click()
+  await expect(page.getByText(/execute as migrações/)).toHaveCount(2)
+  await expect(activity).toHaveValue('')
+})
+
 test('registra, corrige, aprova, consulta e retira uma entrevista', async ({ browser, page }) => {
   const reviewer = await browser.newPage()
   const reader = await browser.newPage()
